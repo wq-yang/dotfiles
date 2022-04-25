@@ -1,0 +1,7 @@
+#+TITLE: wq-yang's dotfiles
+Minimized dotfiles that I use to configure my system.
+
+Includes settings for:
+- zsh
+- Spacemacs
+- Neovim
