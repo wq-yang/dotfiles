@@ -595,6 +595,9 @@ before packages are loaded."
   (setq-default evil-escape-delay 0.2)
   (setq-default evil-escape-unordered-key-sequence t)
 
+  ;; scroll margin
+  (setq-default scroll-margin 6)
+
   ;; tab-related configs
   (centaur-tabs-mode t)
   ;; style
