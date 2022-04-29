@@ -597,10 +597,11 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
   ;; global keys
-  (global-set-key (kbd "C-c r i") 'org-roam-node-insert)
   (global-set-key (kbd "C-c r f") 'org-roam-node-find)
+  (global-set-key (kbd "C-c r c") 'org-roam-capture)
   (global-set-key (kbd "C-c r t") 'org-roam-dailies-capture-today)
   (global-set-key (kbd "C-c r T") 'org-roam-dailies-goto-today)
+  (global-set-key (kbd "C-c r v") 'org-roam-dailies-goto-date)
 
   ;; map jk(or kj) => ESC
   (setq-default evil-escape-key-sequence "jk")
@@ -637,29 +638,36 @@ before packages are loaded."
 
   ;; org-mode settings
   (with-eval-after-load 'org
-  ;;   (setq org-todo-keywords
-  ;;         '((sequence "TODO(t!)" "NEXT(n!)" "DOING(d!)" "BLOCKED(b!)" "TODELEGATE(g!)" "DELEGATED(D!)" "FOLLOWUP(f!)" "TICKLE(T!)" "|" "CANCELLED(c!)" "DONE(F!)")))
-  ;;   (setq org-todo-keyword-faces
-  ;;         '(("TODO" . org-warning)
-  ;;           ("DOING" . "#E35DBF")
-  ;;           ("CANCELED" . (:foreground "white" :background "#4d4d4d" :weight bold))
-  ;;           ("DELEGATED" . "pink")
-  ;;           ("NEXT" . "#008080")))
-  (add-hook 'org-pomodoro-break-finished-hook
-            (lambda ()
-              (interactive)
-              (point-to-register 1)
-              (org-clock-goto)
-              (org-pomodoro '(25))
-              (register-to-point 1)
-              ))
-  (setq org-roam-dailies-directory "daily/")
+    (add-hook 'org-pomodoro-break-finished-hook
+              (lambda ()
+                (interactive)
+                (point-to-register 1)
+                (org-clock-goto)
+                (org-pomodoro '(25))
+                (register-to-point 1)
+                ))
 
-  (setq org-roam-dailies-capture-templates
-        '(("d" "default" entry
-           "* %?"
-           :target (file+head "%<%Y-%m-%d>.org"
-                              "#+title: %<%Y-%m-%d>\n"))))
+    ;; integrate org-roam-protocol
+    (setq org-roam-v2-ack t)
+
+    (use-package org-roam-protocol)
+
+    (add-to-list 'org-roam-capture-ref-templates
+                 '("w" "website" plain
+                   "%?"
+                   :target
+                   (file+head "web/%<%Y%m%d>-${slug}.org"
+                              "#+title: ${title}\n${body}")
+                   :unnarrowed t))
+
+    ;; org-roam-dailies
+    (setq org-roam-dailies-directory "daily/")
+
+    (setq org-roam-dailies-capture-templates
+          '(("d" "default" entry
+            "* %?"
+            :target (file+head "%<%Y-%m-%d>.org"
+                                "#+title: %<%Y-%m-%d>\n"))))
   )
 )
 
@@ -678,7 +686,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(org-agenda-files '("~/org/todo.org"))
  '(package-selected-packages
-   '(org-roam web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data org-wild-notifier web-beautify prettier-js npm-mode nodejs-repl livid-mode skewer-mode simple-httpd json-reformat json-navigator hierarchy json-mode json-snatcher js2-refactor multiple-cursors js2-mode js-doc company-statistics yasnippet-snippets xterm-color vterm underwater-theme treemacs-magit toml-mode terminal-here smeargle shell-pop ron-mode racer rust-mode orgit-forge orgit org-rich-yank org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-contrib org-cliplink multi-term lsp-ui lsp-treemacs lsp-origami origami htmlize helm-org-rifle helm-lsp lsp-mode helm-ls-git helm-git-grep helm-company helm-c-yasnippet gnuplot gitignore-templates git-timemachine git-modes git-messenger git-link fuzzy forge yaml magit ghub closql emacsql-sqlite emacsql treepy magit-section git-commit with-editor transient flycheck-rust flycheck-pos-tip pos-tip evil-org espresso-theme eshell-z eshell-prompt-extras esh-help company centaur-tabs cargo markdown-mode auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode visual-fill-column winum volatile-highlights vi-tilde-fringe uuidgen undo-tree queue treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil treemacs cfrs pfuture posframe toc-org symon symbol-overlay string-inflection string-edit spaceline-all-the-icons memoize spaceline powerline restart-emacs request rainbow-delimiters quickrun popwin persp-mode password-generator paradox spinner overseer org-superstar open-junk-file nameless multi-line shut-up macrostep lorem-ipsum link-hint inspector info+ indent-guide hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose window-purpose imenu-list helm-projectile helm-org helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flycheck-package package-lint flycheck pkg-info epl flycheck-elsa flx-ido flx fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-terminal-cursor-changer evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-collection annalist evil-cleverparens smartparens evil-args evil-anzu anzu eval-sexp-fu emr iedit clang-format projectile paredit list-utils elisp-slime-nav elisp-def f editorconfig dumb-jump s drag-stuff dired-quick-sort devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol ht dash auto-compile packed compat all-the-icons aggressive-indent ace-window ace-link ace-jump-helm-line helm avy popup helm-core which-key use-package pcre2el hydra lv hybrid-mode font-lock+ evil goto-chg dotenv-mode diminish bind-map bind-key async))
+   '(org-roam-ui quelpa org-roam web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data org-wild-notifier web-beautify prettier-js npm-mode nodejs-repl livid-mode skewer-mode simple-httpd json-reformat json-navigator hierarchy json-mode json-snatcher js2-refactor multiple-cursors js2-mode js-doc company-statistics yasnippet-snippets xterm-color vterm underwater-theme treemacs-magit toml-mode terminal-here smeargle shell-pop ron-mode racer rust-mode orgit-forge orgit org-rich-yank org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-contrib org-cliplink multi-term lsp-ui lsp-treemacs lsp-origami origami htmlize helm-org-rifle helm-lsp lsp-mode helm-ls-git helm-git-grep helm-company helm-c-yasnippet gnuplot gitignore-templates git-timemachine git-modes git-messenger git-link fuzzy forge yaml magit ghub closql emacsql-sqlite emacsql treepy magit-section git-commit with-editor transient flycheck-rust flycheck-pos-tip pos-tip evil-org espresso-theme eshell-z eshell-prompt-extras esh-help company centaur-tabs cargo markdown-mode auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode visual-fill-column winum volatile-highlights vi-tilde-fringe uuidgen undo-tree queue treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil treemacs cfrs pfuture posframe toc-org symon symbol-overlay string-inflection string-edit spaceline-all-the-icons memoize spaceline powerline restart-emacs request rainbow-delimiters quickrun popwin persp-mode password-generator paradox spinner overseer org-superstar open-junk-file nameless multi-line shut-up macrostep lorem-ipsum link-hint inspector info+ indent-guide hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose window-purpose imenu-list helm-projectile helm-org helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flycheck-package package-lint flycheck pkg-info epl flycheck-elsa flx-ido flx fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-terminal-cursor-changer evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-collection annalist evil-cleverparens smartparens evil-args evil-anzu anzu eval-sexp-fu emr iedit clang-format projectile paredit list-utils elisp-slime-nav elisp-def f editorconfig dumb-jump s drag-stuff dired-quick-sort devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol ht dash auto-compile packed compat all-the-icons aggressive-indent ace-window ace-link ace-jump-helm-line helm avy popup helm-core which-key use-package pcre2el hydra lv hybrid-mode font-lock+ evil goto-chg dotenv-mode diminish bind-map bind-key async))
  '(warning-suppress-types '(((evil-collection)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
