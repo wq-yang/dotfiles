@@ -647,27 +647,48 @@ before packages are loaded."
                 (register-to-point 1)
                 ))
 
+    ;; file init/capture templates
+    (setq org-roam-capture-templates
+          '(("d" "default" plain
+             "%?"
+             :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                                "#+title: ${title}")
+             :unnarrowed nil)
+            ("t" "tags" plain
+             "%?"
+             :target (file+head "tags/${slug}.org"
+                                "#+title: ${title}")
+             :immediate-finish t
+             :kill-buffer t)))
+
     ;; integrate org-roam-protocol
-    (setq org-roam-v2-ack t)
-
     (use-package org-roam-protocol)
-
-    (add-to-list 'org-roam-capture-ref-templates
-                 '("w" "website" plain
-                   "%?"
-                   :target
-                   (file+head "web/%<%Y%m%d>-${slug}.org"
-                              "#+title: ${title}\n${body}")
-                   :unnarrowed t))
+    (setq org-roam-capture-ref-templates
+          '(("r" "ref" plain "%?" :target
+             (file+head "${slug}.org"
+                        "#+title: ${title}")
+             :unnarrowed t)
+            ("w" "website" plain
+             "${body}\n"
+             :target (file+head "web/%<%Y%m%d>-${slug}.org"
+                                "#+title: ${title}")
+             :immediate-finish t
+             :unnarrowed t)
+            ("a" "algorithm problems" plain
+             "* Description\n#+begin_quote\n${body}\n#+end_quote\n* Intuition\n%?\n* Solution\n#+begin_src\n\n#+end_src"
+             :target (file+head "algorithm/${slug}.org"
+                                "#+title: ${title}")
+             :kill-buffer t
+             :unnarrowed t)))
 
     ;; org-roam-dailies
     (setq org-roam-dailies-directory "daily/")
-
     (setq org-roam-dailies-capture-templates
           '(("d" "default" entry
             "* %?"
             :target (file+head "%<%Y-%m-%d>.org"
-                                "#+title: %<%Y-%m-%d>\n"))))
+                                "#+title: %<%Y-%m-%d>\n")
+            :kill-buffer t)))
   )
 )
 
