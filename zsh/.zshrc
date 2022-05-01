@@ -14,6 +14,7 @@ source $ZSH/oh-my-zsh.sh
 alias lsd="ls -ltrha"
 alias rm="rm -i"
 alias cp="cp -i"
+alias mv="mv -i"
 
 function mkcd() {
     if [[ -d $1 ]]; then
