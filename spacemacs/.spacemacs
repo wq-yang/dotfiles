@@ -60,15 +60,18 @@ This function should only modify configuration layer settings."
      (lsp :variables
           ;; lsp-ui-sideline-code-actions-prefix " "
           lsp-rust-server 'rust-analyzer
+          lsp-rust-analyzer-server-display-inlay-hints t
           cargo-process-reload-on-modify t)
      ;; markdown
      multiple-cursors
+     neotree
      (org :variables
           org-want-todo-bindings t
           org-enable-notifications t
           ;; org-start-notification-daemon-on-startup t
           org-enable-roam-support t
           org-enable-roam-protocol t)
+     protobuf
      (rust :variables
            rust-format-on-save t)
      (shell :variables
@@ -79,7 +82,7 @@ This function should only modify configuration layer settings."
      spotify
      syntax-checking
      ;; version-control
-     treemacs
+     ;; treemacs
      (typescript :variables
                  typescript-backend 'lsp
                  typescript-lsp-linter nil
@@ -102,7 +105,8 @@ This function should only modify configuration layer settings."
                                                            :repo "wq-yang/flycheck"))
                                       (flycheck-rust :location (recipe
                                                                 :fetcher github
-                                                                :repo "wq-yang/flycheck-rust")))
+                                                                :repo "wq-yang/flycheck-rust"))
+                                      org-roam-ui)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -401,12 +405,12 @@ It should only modify the values of Spacemacs settings."
    ;; A value from the range (0..100), in increasing opacity, which describes
    ;; the transparency level of a frame when it's active or selected.
    ;; Transparency can be toggled through `toggle-transparency'. (default 90)
-   dotspacemacs-active-transparency 90
+   dotspacemacs-active-transparency 95
 
    ;; A value from the range (0..100), in increasing opacity, which describes
    ;; the transparency level of a frame when it's inactive or deselected.
    ;; Transparency can be toggled through `toggle-transparency'. (default 90)
-   dotspacemacs-inactive-transparency 90
+   dotspacemacs-inactive-transparency 75
 
    ;; If non-nil show the titles of transient states. (default t)
    dotspacemacs-show-transient-state-title t
@@ -488,7 +492,7 @@ It should only modify the values of Spacemacs settings."
 
    ;; If non-nil, advise quit functions to keep server open when quitting.
    ;; (default nil)
-   dotspacemacs-persistent-server nil
+   dotspacemacs-persistent-server t
 
    ;; List of search tool executable names. Spacemacs uses the first installed
    ;; tool of the list. Supported tools are `rg', `ag', `pt', `ack' and `grep'.
@@ -598,10 +602,14 @@ Put your configuration code here, except for variables that should be set
 before packages are loaded."
   ;; global keys
   (global-set-key (kbd "C-c r f") 'org-roam-node-find)
+  (global-set-key (kbd "C-c r i") 'org-roam-node-insert)
   (global-set-key (kbd "C-c r c") 'org-roam-capture)
   (global-set-key (kbd "C-c r t") 'org-roam-dailies-capture-today)
   (global-set-key (kbd "C-c r T") 'org-roam-dailies-goto-today)
   (global-set-key (kbd "C-c r v") 'org-roam-dailies-goto-date)
+  (global-set-key (kbd "C-c r p") 'org-pomodoro)
+
+  (setq c-basic-offset 4)
 
   ;; map jk(or kj) => ESC
   (setq-default evil-escape-key-sequence "jk")
@@ -609,7 +617,7 @@ before packages are loaded."
   (setq-default evil-escape-unordered-key-sequence t)
 
   ;; scroll margin
-  (setq-default scroll-margin 6)
+  (setq-default scroll-margin 10)
 
   ;; tab-related configs
   (centaur-tabs-mode t)
@@ -632,12 +640,17 @@ before packages are loaded."
   ;; use typescript-mode for .tsx
   (add-to-list 'auto-mode-alist '("\\.tsx\\'" . typescript-mode))
 
+  ;; neo tree
+  (setq neo-theme 'nerd)
+
   ;; git commit
   (require 'git-commit)
   (global-git-commit-mode t)
 
   ;; org-mode settings
   (with-eval-after-load 'org
+    ;; (add-hook 'org-mode-hook #'visual-line-mode)
+    (setq fill-column 160)
     (add-hook 'org-pomodoro-break-finished-hook
               (lambda ()
                 (interactive)
@@ -656,7 +669,7 @@ before packages are loaded."
              :unnarrowed nil)
             ("t" "tags" plain
              "%?"
-             :target (file+head "tags/${slug}.org"
+             :target (file+head "_tags/${slug}.org"
                                 "#+title: ${title}")
              :immediate-finish t
              :kill-buffer t)))
@@ -667,28 +680,27 @@ before packages are loaded."
           '(("r" "ref" plain "%?" :target
              (file+head "${slug}.org"
                         "#+title: ${title}")
+             :kill-buffer t
              :unnarrowed t)
             ("w" "website" plain
-             "${body}\n"
+             "${body}\n%?"
              :target (file+head "web/%<%Y%m%d>-${slug}.org"
                                 "#+title: ${title}")
              :immediate-finish t
-             :unnarrowed t)
-            ("a" "algorithm problems" plain
-             "* Description\n#+begin_quote\n${body}\n#+end_quote\n* Intuition\n%?\n* Solution\n#+begin_src\n\n#+end_src"
-             :target (file+head "algorithm/${slug}.org"
-                                "#+title: ${title}")
-             :kill-buffer t
              :unnarrowed t)))
 
     ;; org-roam-dailies
     (setq org-roam-dailies-directory "daily/")
     (setq org-roam-dailies-capture-templates
           '(("d" "default" entry
-            "* %?"
+            "* "
             :target (file+head "%<%Y-%m-%d>.org"
                                 "#+title: %<%Y-%m-%d>\n")
-            :kill-buffer t)))
+            )))
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t)
   )
 )
 
@@ -705,9 +717,9 @@ This function is called at the very end of Spacemacs initialization."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(org-agenda-files '("~/org/todo.org"))
+ '(org-agenda-files nil)
  '(package-selected-packages
-   '(org-roam-ui quelpa org-roam web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data org-wild-notifier web-beautify prettier-js npm-mode nodejs-repl livid-mode skewer-mode simple-httpd json-reformat json-navigator hierarchy json-mode json-snatcher js2-refactor multiple-cursors js2-mode js-doc company-statistics yasnippet-snippets xterm-color vterm underwater-theme treemacs-magit toml-mode terminal-here smeargle shell-pop ron-mode racer rust-mode orgit-forge orgit org-rich-yank org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-contrib org-cliplink multi-term lsp-ui lsp-treemacs lsp-origami origami htmlize helm-org-rifle helm-lsp lsp-mode helm-ls-git helm-git-grep helm-company helm-c-yasnippet gnuplot gitignore-templates git-timemachine git-modes git-messenger git-link fuzzy forge yaml magit ghub closql emacsql-sqlite emacsql treepy magit-section git-commit with-editor transient flycheck-rust flycheck-pos-tip pos-tip evil-org espresso-theme eshell-z eshell-prompt-extras esh-help company centaur-tabs cargo markdown-mode auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode visual-fill-column winum volatile-highlights vi-tilde-fringe uuidgen undo-tree queue treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil treemacs cfrs pfuture posframe toc-org symon symbol-overlay string-inflection string-edit spaceline-all-the-icons memoize spaceline powerline restart-emacs request rainbow-delimiters quickrun popwin persp-mode password-generator paradox spinner overseer org-superstar open-junk-file nameless multi-line shut-up macrostep lorem-ipsum link-hint inspector info+ indent-guide hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose window-purpose imenu-list helm-projectile helm-org helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flycheck-package package-lint flycheck pkg-info epl flycheck-elsa flx-ido flx fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-terminal-cursor-changer evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-collection annalist evil-cleverparens smartparens evil-args evil-anzu anzu eval-sexp-fu emr iedit clang-format projectile paredit list-utils elisp-slime-nav elisp-def f editorconfig dumb-jump s drag-stuff dired-quick-sort devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol ht dash auto-compile packed compat all-the-icons aggressive-indent ace-window ace-link ace-jump-helm-line helm avy popup helm-core which-key use-package pcre2el hydra lv hybrid-mode font-lock+ evil goto-chg dotenv-mode diminish bind-map bind-key async))
+   '(protobuf-mode org-roam-ui quelpa org-roam web-mode tagedit slim-mode scss-mode sass-mode pug-mode impatient-mode helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data org-wild-notifier web-beautify prettier-js npm-mode nodejs-repl livid-mode skewer-mode simple-httpd json-reformat json-navigator hierarchy json-mode json-snatcher js2-refactor multiple-cursors js2-mode js-doc company-statistics yasnippet-snippets xterm-color vterm underwater-theme treemacs-magit toml-mode terminal-here smeargle shell-pop ron-mode racer rust-mode orgit-forge orgit org-rich-yank org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-contrib org-cliplink multi-term lsp-ui lsp-treemacs lsp-origami origami htmlize helm-org-rifle helm-lsp lsp-mode helm-ls-git helm-git-grep helm-company helm-c-yasnippet gnuplot gitignore-templates git-timemachine git-modes git-messenger git-link fuzzy forge yaml magit ghub closql emacsql-sqlite emacsql treepy magit-section git-commit with-editor transient flycheck-rust flycheck-pos-tip pos-tip evil-org espresso-theme eshell-z eshell-prompt-extras esh-help company centaur-tabs cargo markdown-mode auto-yasnippet yasnippet ac-ispell auto-complete ws-butler writeroom-mode visual-fill-column winum volatile-highlights vi-tilde-fringe uuidgen undo-tree queue treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil treemacs cfrs pfuture posframe toc-org symon symbol-overlay string-inflection string-edit spaceline-all-the-icons memoize spaceline powerline restart-emacs request rainbow-delimiters quickrun popwin persp-mode password-generator paradox spinner overseer org-superstar open-junk-file nameless multi-line shut-up macrostep lorem-ipsum link-hint inspector info+ indent-guide hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose window-purpose imenu-list helm-projectile helm-org helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flycheck-package package-lint flycheck pkg-info epl flycheck-elsa flx-ido flx fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-terminal-cursor-changer evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-easymotion evil-collection annalist evil-cleverparens smartparens evil-args evil-anzu anzu eval-sexp-fu emr iedit clang-format projectile paredit list-utils elisp-slime-nav elisp-def f editorconfig dumb-jump s drag-stuff dired-quick-sort devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol ht dash auto-compile packed compat all-the-icons aggressive-indent ace-window ace-link ace-jump-helm-line helm avy popup helm-core which-key use-package pcre2el hydra lv hybrid-mode font-lock+ evil goto-chg dotenv-mode diminish bind-map bind-key async))
  '(warning-suppress-types '(((evil-collection)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
